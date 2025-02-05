@@ -3,7 +3,7 @@ from botocore.exceptions import NoCredentialsError
 
 class FakeS3:
     def __init__(self):
-        self.buckets = {}
+        self.buckets =  {}
 
     def create_bucket(self, bucket_name):
         """Simula a criação de um bucket S3"""
