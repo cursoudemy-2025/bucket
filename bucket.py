@@ -1,49 +1,31 @@
-import boto3
-from botocore.exceptions import NoCredentialsError
+from flask import Flask, request, send_from_directory, jsonify
+import os
 
-class FakeS3:
-    def __init__(self):
-        self.buckets =  {}
+app = Flask(__name__)
+BUCKET_NAME = "cursohackerudemy.s3.amazonaws.com"
+UPLOAD_FOLDER = "./bucket_storage"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-    def create_bucket(self, bucket_name):
-        """Simula a criação de um bucket S3"""
-        if bucket_name not in self.buckets:
-            self.buckets[bucket_name] = []
-            print(f"Bucket '{bucket_name}' criado com sucesso.")
-        else:
-            print(f"Bucket '{bucket_name}' já existe.")
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": f"Simulador do bucket {BUCKET_NAME} rodando!"})
 
-    def upload_file(self, bucket_name, file_name, content):
-        """Simula o upload de um arquivo para o bucket"""
-        if bucket_name in self.buckets:
-            self.buckets[bucket_name].append({'file_name': file_name, 'content': content})
-            print(f"Arquivo '{file_name}' carregado no bucket '{bucket_name}'.")
-        else:
-            print(f"Erro: O bucket '{bucket_name}' não existe.")
+@app.route("/upload", methods=["POST"])
+def upload_file():
+    if "file" not in request.files:
+        return jsonify({"error": "Nenhum arquivo enviado"}), 400
+    file = request.files["file"]
+    file.save(os.path.join(UPLOAD_FOLDER, file.filename))
+    return jsonify({"message": f"Arquivo {file.filename} salvo com sucesso!"})
 
-    def list_files(self, bucket_name):
-        """Simula a listagem de arquivos dentro do bucket"""
-        if bucket_name in self.buckets:
-            print(f"Arquivos no bucket '{bucket_name}':")
-            for file in self.buckets[bucket_name]:
-                print(f" - {file['file_name']}")
-        else:
-            print(f"Erro: O bucket '{bucket_name}' não existe.")
+@app.route("/download/<filename>", methods=["GET"])
+def download_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
 
+@app.route("/list", methods=["GET"])
+def list_files():
+    files = os.listdir(UPLOAD_FOLDER)
+    return jsonify({"files": files})
 
-# Simulação de uso
-s3 = FakeS3()
-
-# Criando buckets
-s3.create_bucket('meu-bucket')
-s3.create_bucket('outro-bucket')
-
-# Fazendo upload de arquivos
-s3.upload_file('meu-bucket', 'file1.txt', 'Conteúdo do arquivo 1')
-s3.upload_file('meu-bucket', 'file2.txt', 'Conteúdo do arquivo 2')
-
-# Listando arquivos do bucket
-s3.list_files('meu-bucket')
-
-# Tentando fazer upload em um bucket não existente
-s3.upload_file('bucket-inexistente', 'file3.txt', 'Conteúdo do arquivo 3')
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
