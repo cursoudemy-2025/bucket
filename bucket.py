@@ -1,6 +1,8 @@
 from flask import Flask, request, send_from_directory, jsonify
 import os
 
+API_KEY = "fake_api_key_123456"
+API_SECRET = "fake_secret_password_654321"
 app = Flask(__name__)
 BUCKET_NAME = "cursohackerudemy.s3.amazonaws.com"
 UPLOAD_FOLDER = "./bucket_storage"
